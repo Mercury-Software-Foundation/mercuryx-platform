@@ -10,13 +10,11 @@ import { DynamicButton } from "../../components/Button";
 import { useNavigate, useParams } from "react-router";
 import { useLazyQuery } from "../../utils/hook";
 import { serverFetch } from "../../utils/action";
- import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
+import RenderComponent from "../../components/RenderComponet";
 
-function PageView({
-  pageData,
-}: {
-    pageData: any;
-}) {
+
+function PageView({ pageData }: { pageData: any }) {
   const params = useParams();
   const [DeleteRecordd, DeleteRecorddResponse] = useLazyQuery(serverFetch);
   const navigate = useNavigate();
@@ -68,58 +66,58 @@ function PageView({
         },
       }}
     >
-     <Box
-  styles={{
-    base: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "0.5rem",
-      paddingTop: "0.5rem",
-    },
-    _dark: {
-      backgroundColor: "black",
-    },
-  }}
->
-  {pageData?.getPage &&
-    <Box
-      styles={{
-        base: {
-          width: "100%", // or set specific width like "48%" for 2-column-like layout
-          height: "auto",
-          overflowY: "auto",
-          borderRadius: "5px",
-          color: "white",
-          display: "flex",
-          flexDirection: "column",
-        },
-      }}
-    >
-      {pageData?.getPage.component?.managed ? (
-        <ManagedComponent
-          managed={pageData?.getPage.component?.managed}
-          componentName={pageData?.getPage.component?.name}
-        />
-      ) : (
-        <Suspense>
-          <DynamicComponentLoader
-            code={pageData?.getPage.component?.code}
-            props={{
-              Std: {
-                ...MESS_TAGS,
-                data: pageData?.getPage,
-                serverFetch: serverFetch,
-                useLazyQuery: useLazyQuery,
-                userId: Cookies.get('userId'),
+      <Box
+        styles={{
+          base: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "0.5rem",
+            paddingTop: "0.5rem",
+          },
+          _dark: {
+            backgroundColor: "black",
+          },
+        }}
+      >
+        {pageData?.getPage && (
+          <Box
+            styles={{
+              base: {
+                width: "100%", // or set specific width like "48%" for 2-column-like layout
+                height: "auto",
+                overflowY: "auto",
+                borderRadius: "5px",
+                color: "white",
+                display: "flex",
+                flexDirection: "column",
               },
             }}
-          />
-        </Suspense>
-      )}
-    </Box>
-  }
-</Box>
-
+          >
+            {pageData?.getPage.component?.managed ? (
+              <ManagedComponent
+                managed={pageData?.getPage.component?.managed}
+                componentName={pageData?.getPage.component?.name}
+              />
+            ) : (
+              <Suspense fallback={<>Loading Component....</>}>
+                <DynamicComponentLoader
+                  code={pageData?.getPage.component?.code}
+                  props={{
+                    Std: {
+                      ...MESS_TAGS,
+                      data: pageData?.getPage,
+                      serverFetch: serverFetch,
+                      useLazyQuery: useLazyQuery,
+                      userId: Cookies.get("userId"),
+                      RenderComponent: RenderComponent
+                    },
+                  }}
+                />
+              </Suspense>
+            )}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }

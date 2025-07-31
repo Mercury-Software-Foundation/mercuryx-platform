@@ -14,14 +14,15 @@ const DynamicComponentLoader = ({
   >({});
   const [componentBody, setComponentBody] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
-
+  const [propsArray, setPropsArray] = React.useState<string[]>([]);
+  console.log(props, "props in dynamic component loader");
+  
   React.useEffect(() => {
     const decodeAndLoad = async () => {
       try {
         const decodedCode = atob(code); // base64 decode
-        const [imports, body] = splitCodeContent(decodedCode);
-        console.log("Imports:", imports);
-        
+        const [imports, body, propsArray] = splitCodeContent(decodedCode);
+        setPropsArray(propsArray);
 
         const modules = await extractImports(imports);
         setImportedModules(modules);
@@ -45,8 +46,8 @@ const DynamicComponentLoader = ({
         <>Loading......</>
       ) : (
         // <ErrorBoundary>
-          <StringToReactComponent data={{ ...props, pkg: importedModules }}>
-            {`({Std, pkg}) => {
+          <StringToReactComponent data={{ ...props, pkg: importedModules  }}>
+            {`({Std, pkg, ${propsArray.join(", ")}}) => {
               ${componentBody}
             }`}
           </StringToReactComponent>
@@ -88,13 +89,33 @@ function getImports(imports: string): string {
   return assignments.join("\n");
 }
 
-const splitCodeContent = (code: string): [string, string] => {
+const splitCodeContent = (code: string): [string, string, string[]] => {
   const importRegex = /^(import[\s\S]*?;\n*)+/;
   const imports = code.match(importRegex)?.[0] || "";
   const withoutImports = code.replace(importRegex, "").trim();
 
-  const functionStartRegex = /export\s+default\s+function\s+\w+\s*\(\)\s*{/;
+  // Match export default function with any params (including spaces, newlines, etc.)
+  const functionStartRegex = /export\s+default\s+function\s+\w*\s*\(([^)]*)\)\s*{/;
   const startMatch = withoutImports.match(functionStartRegex);
+
+  // Extract props as an array, handling destructured props like ({ prop1, prop2 }) or just (props)
+  let propsArray: string[] = [];
+  if (startMatch && startMatch[1]) {
+    const param = startMatch[1].trim();
+    if (param.startsWith("{") && param.endsWith("}")) {
+      // Remove braces and split by comma
+      propsArray = param
+        .slice(1, -1)
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+    } else if (param) {
+      // Just push the param name (e.g., "props")
+      propsArray = [param];
+    }
+  }
+  
+  
 
   if (!startMatch) {
     throw new Error("Could not find exported function declaration");
@@ -115,7 +136,7 @@ const splitCodeContent = (code: string): [string, string] => {
   const functionBody = withoutImports
     .slice(startIndex, currentIndex - 1)
     .trim();
-  return [imports, functionBody];
+  return [imports, functionBody, propsArray || []];
 };
 
 const extractImports = async (
