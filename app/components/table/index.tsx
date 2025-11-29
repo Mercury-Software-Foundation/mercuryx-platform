@@ -26,7 +26,7 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { CustomSelect } from "../inputs";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 
 interface TableProps<T extends object> {
   data: T[];
@@ -43,9 +43,35 @@ const DynamicTable = forwardRef<HTMLDivElement, TableProps<any>>(
     { data, columns, rowCount, pagination, setPagination, sorting, setSorting },
     ref
   ) => {
+
+    // Removed duplicate declaration of navigate
+
+    const updatedColumns: ColumnDef<any>[] = [
+      ...columns,
+      {
+        accessorKey: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const item = row.original;
+
+          return (
+            <A className="flex gap-2" href={`/dashboard/o/${params?.model}/r/${row.original.id}/update`} target="_blank">
+              {/* <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate(`/edit/${item.id}`)}
+              > */}
+                Edit
+              {/* </Button> */}
+            </A>
+          );
+        },
+      },
+    ];
+
     const table = useReactTable({
       data,
-      columns,
+      columns:updatedColumns,
       state: {
         pagination,
         sorting,
@@ -181,6 +207,8 @@ const renderPagination = () => {
             <Tbody styles={{ base: { backgroundColor: "var(--table-row-backgroundColor)",
         color: "var(--table-row-textColor)", } }}>
               {table.getRowModel().rows.map((row) => (
+                // <Link to={`/dashboard/o/${params?.model}/r/${row.original.id}`} key={row.id}  style={{ textDecoration: 'none' }}>
+
                 <Tr
                   key={row.id}
                   onClick={() => {
@@ -216,6 +244,7 @@ const renderPagination = () => {
                     </Th>
                   ))}
                 </Tr>
+                // </Link>
               ))}
             </Tbody>
           </Table>
