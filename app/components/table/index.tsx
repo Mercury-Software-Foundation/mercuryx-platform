@@ -55,7 +55,9 @@ const DynamicTable = forwardRef<HTMLDivElement, TableProps<any>>(
           const item = row.original;
 
           return (
-            <A className="flex gap-2" href={`/dashboard/o/${params?.model}/r/${row.original.id}/update`} target="_blank">
+            <A className="flex gap-2" href={`/dashboard/o/${params?.model}/r/${row.original.id}/update`} target="_blank"   onClick={(e) => {
+              e.stopPropagation();   // stop parent click
+            }}>
               {/* <Button
                 variant="primary"
                 size="sm"
